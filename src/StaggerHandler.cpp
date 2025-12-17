@@ -33,8 +33,11 @@ namespace MaxsuPoise
 			return;
 
 		auto staggerProtectTime = StaggerProtectHandler::GetStaggerProtectTimer(target);
-		if (staggerProtectTime > 0.f && RE::IsStaggering(target))
-			return;
+	if (staggerProtectTime > 0.f && RE::IsStaggering(target)) {
+		// Flash bar to indicate stagger protection is active
+		TrueHUDHandler::GetSingleton()->FlashPoiseBar(target, false);
+		return;
+	}
 
 		auto totalPoiseHealth = PoiseHealthHandler::GetTotalPoiseHealth(target);
 		auto currentPoiseHealth = PoiseHealthHandler::GetCurrentPoiseHealth(target);

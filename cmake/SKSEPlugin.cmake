@@ -73,12 +73,13 @@ target_include_directories("${PROJECT_NAME}" PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
 target_link_libraries("${PROJECT_NAME}" PUBLIC CommonLibSSE::CommonLibSSE)
 target_link_libraries("${PROJECT_NAME}" PRIVATE DKUtil::DKUtil)
 
-# Post-build: Copy DLL and PDB to build output folder
+# Post-build: Copy DLL and PDB to build output folder, then create 7z archive
 set(OUTPUT_FOLDER "${CMAKE_BINARY_DIR}/SKSE/Plugins")
 
 add_custom_command(TARGET "${PROJECT_NAME}" POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_FOLDER}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:${PROJECT_NAME}>" "${OUTPUT_FOLDER}/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_PDB_FILE:${PROJECT_NAME}>" "${OUTPUT_FOLDER}/$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>.pdb"
-    COMMENT "Copying plugin to ${OUTPUT_FOLDER}"
+    COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}" ${CMAKE_COMMAND} -E tar "cfv" "MaxsuPoiseRequiem.7z" --format=7zip "SKSE"
+    COMMENT "Copying plugin to ${OUTPUT_FOLDER} and creating MaxsuPoiseRequiem.7z"
 )
