@@ -10,6 +10,7 @@ namespace MaxsuPoise
 		static TrueHUDHandler* GetSingleton();
 
 		void Initialize();
+		void Shutdown();
 		bool IsEnabled() const { return g_trueHUD != nullptr; }
 
 		void FlashPoiseBar(RE::Actor* a_actor, bool a_long = false);

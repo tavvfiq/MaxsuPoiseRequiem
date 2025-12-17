@@ -49,6 +49,16 @@ namespace MaxsuPoise
 		}
 	}
 
+	void TrueHUDHandler::Shutdown()
+	{
+		if (g_trueHUD) {
+			auto result = g_trueHUD->ReleaseSpecialResourceBarControl(g_pluginHandle);
+			if (result == TRUEHUD_API::APIResult::OK) {
+				INFO("TrueHUD special resource bar control released");
+			}
+		}
+	}
+
 	void TrueHUDHandler::FlashPoiseBar(RE::Actor* a_actor, bool a_long)
 	{
 		if (!g_trueHUD || !a_actor) {
