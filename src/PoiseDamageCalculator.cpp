@@ -16,14 +16,17 @@ namespace MaxsuPoise
 
 		float baseWeapDamage = sourceProjectile ? GetBaseRangePoiseDamage() : GetBaseMeleePoiseDamage();
 		float weapDamageMult = sourceProjectile ? GetWeaponDamageMult(sourceProjectile->GetProjectileRuntimeData().weaponSource) : GetWeaponDamageMult(a_hitData->weapon);
+		float weapMaterialMult = sourceProjectile ? 1.0f : GetWeaponMaterialMult(a_hitData->weapon);
 		float animDamageMult = aggressor ? GetAnimationDamageMult(aggressor) : 0.f;
 		float attackDataMult = GetAttackDataDamageMult(a_hitData->attackData.get());
+		float criticalMult = GetCriticalHitMult(a_hitData);
+		float velocityMult = aggressor ? GetVelocityMult(aggressor) : 1.0f;
 		float ModTargetStagger = GetPerkModTargetStagger(aggressor, target);
 		float ModIncomingStagger = GetPerkModIncomingStagger(aggressor, target);
 		float StrengthMult = GetStrengthMult(aggressor, target);
 		float BlockingMult = GetBlockingMult(a_hitData);
 
-		result = baseWeapDamage * (weapDamageMult + StrengthMult + attackDataMult) * (1 + animDamageMult) * ModTargetStagger * ModIncomingStagger;
+		result = baseWeapDamage * (weapDamageMult + StrengthMult + attackDataMult) * weapMaterialMult * (1 + animDamageMult) * velocityMult * criticalMult * ModTargetStagger * ModIncomingStagger;
 		if (a_hitData->flags.any(RE::HitData::Flag::kBlocked)) {
 			result *= BlockingMult;
 		}
@@ -48,6 +51,12 @@ namespace MaxsuPoise
 
 		if (a_weapon->HasKeywordString("MaxsuPoise_UniqueWeapStagger"))
 			return a_weapon->GetStagger();
+
+		for (const auto& [keyword, mult] : SettingsHandler::weapKeywordMultMap) {
+			if (a_weapon->HasKeywordString(keyword)) {
+				return mult;
+			}
+		}
 
 		auto weapType = a_weapon->GetWeaponType();
 		auto item = SettingsHandler::weapTypeMultMap.find(weapType);
@@ -90,6 +99,48 @@ namespace MaxsuPoise
 		float attackerSTRG = GetActorMass(a_aggressor) * a_aggressor->GetScale();
 		float targetSTRG = GetActorMass(a_target) * a_target->GetScale();
 		return attackerSTRG / targetSTRG;
+	}
+
+	float PoiseDamageCalculator::GetWeaponMaterialMult(RE::TESObjectWEAP* a_weapon)
+	{
+		if (!a_weapon)
+			return 1.0f;
+
+		auto weight = a_weapon->GetWeight();
+		auto weapData = a_weapon->weaponData;
+		auto damage = weapData ? weapData->damage : 0;
+		
+		auto weightScale = GetGameSettingFloat("fMaxsuPoise_WeaponWeightScale", 0.05f);
+		auto damageScale = GetGameSettingFloat("fMaxsuPoise_WeaponDamageScale", 0.015f);
+		
+		return 1.0f + (weight * weightScale) + (damage * damageScale);
+	}
+
+	float PoiseDamageCalculator::GetCriticalHitMult(const RE::HitData* a_hitData)
+	{
+		if (!a_hitData)
+			return 1.0f;
+
+		if (a_hitData->flags.any(RE::HitData::Flag::kCritical)) {
+			return GetGameSettingFloat("fMaxsuPoise_CriticalHitMult", 2.0f);
+		}
+
+		return 1.0f;
+	}
+
+	float PoiseDamageCalculator::GetVelocityMult(RE::Actor* a_aggressor)
+	{
+		if (!a_aggressor)
+			return 1.0f;
+
+		auto velocity = a_aggressor->AsActorState()->actorState1.movingForward || 
+		                a_aggressor->AsActorState()->actorState1.sprinting;
+		
+		if (velocity) {
+			return GetGameSettingFloat("fMaxsuPoise_VelocityMult", 1.3f);
+		}
+
+		return 1.0f;
 	}
 
 	float PoiseDamageCalculator::GetMagicPoiseDamage(RE::Actor* a_target, float a_staggerMult, RE::Actor* a_aggressor)

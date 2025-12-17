@@ -8,6 +8,7 @@ namespace MaxsuPoise
 	bool SettingsHandler::Register()
 	{
 		UpdateWeapTypeMult();
+		InitWeapKeywordMult();
 		InitArmorSlotMult();
 
 		static SettingsHandler singleton;
@@ -46,6 +47,24 @@ namespace MaxsuPoise
 			if (weapEnum.has_value()) {
 				weapTypeMultMap[weapEnum.value()] = (std::stof(value));
 			}
+		}
+	}
+
+	void SettingsHandler::InitWeapKeywordMult()
+	{
+		CSimpleIniA ini;
+		if (ini.LoadFile(fileName))
+			ERROR("Get Error When loading file {}", fileName);
+
+		const CSimpleIniA::TKeyVal* section = ini.GetSection("WeaponKeywordMult");
+		if (!section) {
+			return;
+		}
+
+		for (CSimpleIniA::TKeyVal::const_iterator it = section->begin(); it != section->end(); ++it) {
+			const char* key = it->first.pItem;
+			const char* value = it->second;
+			weapKeywordMultMap[key] = std::stof(value);
 		}
 	}
 

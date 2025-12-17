@@ -27,7 +27,10 @@ namespace MaxsuPoise
 
 		auto actorPoiseHealth = GetBasePoiseHealth() * GetActorMass(a_target) * a_target->GetScale();
 		auto armorPoiseHealth = GetTotalArmorPoiseHealth(a_target);
-		return actorPoiseHealth + armorPoiseHealth;
+		auto armorRatingBonus = GetArmorRatingBonus(a_target);
+		auto staminaPenalty = GetStaminaPenalty(a_target);
+		
+		return (actorPoiseHealth + armorPoiseHealth + armorRatingBonus) * staminaPenalty;
 	}
 
 	float PoiseHealthHandler::GetBasePoiseHealth()
@@ -60,6 +63,34 @@ namespace MaxsuPoise
 		}
 
 		return result;
+	}
+
+	float PoiseHealthHandler::GetArmorRatingBonus(RE::Actor* a_target)
+	{
+		if (!a_target)
+			return 0.f;
+
+		auto armorRating = a_target->GetActorValue(RE::ActorValue::kDamageResist);
+		auto armorScale = GetGameSettingFloat("fMaxsuPoise_ArmorRatingScale", 0.5f);
+		
+		return armorRating * armorScale;
+	}
+
+	float PoiseHealthHandler::GetStaminaPenalty(RE::Actor* a_target)
+	{
+		if (!a_target)
+			return 1.0f;
+
+		auto currentStamina = a_target->GetActorValue(RE::ActorValue::kStamina);
+		auto maxStamina = a_target->GetPermanentActorValue(RE::ActorValue::kStamina);
+		
+		if (maxStamina <= 0.f)
+			return 1.0f;
+
+		auto staminaPercent = currentStamina / maxStamina;
+		auto minPenalty = GetGameSettingFloat("fMaxsuPoise_MinStaminaMult", 0.5f);
+		
+		return std::max(minPenalty, staminaPercent);
 	}
 
 	float PoiseHealthHandler::GetBaseArmorPoiseHealth()

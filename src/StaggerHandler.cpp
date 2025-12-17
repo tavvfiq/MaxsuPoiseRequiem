@@ -2,6 +2,7 @@
 #include "Hooks/PoiseRegenHandler.h"
 #include "PoiseDamageCalculator.h"
 #include "PoiseHealthHandler.h"
+#include "TrueHUDHandler.h"
 #include "Utils.h"
 
 namespace MaxsuPoise
@@ -48,11 +49,15 @@ namespace MaxsuPoise
 				staggerProtectTime = StaggerProtectHandler::GetMaxStaggerProtectTime();
 				StaggerProtectHandler::SetStaggerProtectTimer(target, staggerProtectTime);
 				currentPoiseHealth = totalPoiseHealth;
+				TrueHUDHandler::GetSingleton()->FlashPoiseBar(target, true);
 			}
 		}
 		else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
 				TryStagger(target, 0.25f * (staggerLevel)+0.01f, aggressor);
+				if (staggerLevel >= StaggerLevel::kMedium) {
+					TrueHUDHandler::GetSingleton()->FlashPoiseBar(target, false);
+				}
 			}
 		}
 
@@ -108,11 +113,15 @@ namespace MaxsuPoise
 				staggerProtectTime = StaggerProtectHandler::GetMaxStaggerProtectTime();
 				StaggerProtectHandler::SetStaggerProtectTimer(a_target, staggerProtectTime);
 				currentPoiseHealth = totalPoiseHealth;
+				TrueHUDHandler::GetSingleton()->FlashPoiseBar(a_target, true);
 			}
 		}
 		else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
 				TryStagger(a_target, 0.25f * (staggerLevel)+0.01f, a_aggressor);
+				if (staggerLevel >= StaggerLevel::kMedium) {
+					TrueHUDHandler::GetSingleton()->FlashPoiseBar(a_target, false);
+				}
 			}
 		}
 

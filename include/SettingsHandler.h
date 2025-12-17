@@ -11,6 +11,7 @@ namespace MaxsuPoise
 	{
 	public:
 		static inline std::map<WEAPON_TYPE, float> weapTypeMultMap;
+		static inline std::map<std::string, float> weapKeywordMultMap;
 		static inline std::map<BipedSlot, float> armorSlotMultMap;
 
 		static constexpr char modName[] = "MaxsuPoise";
@@ -29,6 +30,7 @@ namespace MaxsuPoise
 		SettingsHandler() = default;
 
 		static void UpdateWeapTypeMult();
+		static void InitWeapKeywordMult();
 		static void InitArmorSlotMult();
 	};
 

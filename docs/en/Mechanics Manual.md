@@ -1,15 +1,42 @@
 # MaxsuPoise Mechanics Manual
 
-This document would introduce you details about the mechanics of MaxsuPosie.
+This document introduces you to the detailed mechanics of MaxsuPoise, including Requiem-specific enhancements and TrueHUD integration.
 
 ## Table of contents
 
+- [**What's New**](#Whats-New)
 - [**Calculating Total Poise Health**](#Calculating-Total-Poise-Health)
 - [**Calculating Poise Damage**](#Calculating-Poise-Damage)
 - [**Calculating Total Immune Level**](#Calculating-Total-Immune-Level)
 - [**Trigger Stagger**](#Trigger-Stagger)
 - [**Poise Health Regen**](#Poise-Health-Regen)
 - [**Infinite StaggerLock Prevention**](#Infinite-StaggerLock-Prevention)
+- [**TrueHUD Integration**](#TrueHUD-Integration)
+
+<br/>
+
+## What's New
+
+### Recent Enhancements (v0.4.0)
+
+#### **TrueHUD Integration** 🎯
+- Poise bar displayed as special resource in TrueHUD
+- Real-time poise visualization with phantom bar effect
+- Visual flash feedback on poise damage (long flash on break, short flash on medium+ staggers)
+- Completely optional - works with or without TrueHUD installed
+
+#### **Animated Armoury Support** ⚔️
+- Keyword-based weapon detection system
+- Support for custom weapon types (Rapiers, Spears, Pikes, Halberds, Quarterstaffs, Claws, Whips, Javelins)
+- Extensible via INI configuration for any mod's weapon keywords
+
+#### **Requiem Balance Improvements** 🛡️
+1. **Armor Rating Scaling** - High armor rating provides bonus poise (AR × 0.5)
+2. **Stamina-Based Poise** - Low stamina reduces effective poise (minimum 50% at 0 stamina)
+3. **Weapon Weight Impact** - Heavier weapons deal more poise damage
+4. **Weapon Damage Scaling** - Better materials/sharpness affects poise damage
+5. **Critical Hit Bonus** - Critical hits deal 2× poise damage
+6. **Velocity/Momentum** - Moving/sprinting attacks deal 30% more poise damage
 
 <br/>
 
@@ -17,44 +44,106 @@ This document would introduce you details about the mechanics of MaxsuPosie.
 
 ### List of Variables:
 
-1. **BasePoiseHealth**: Global value that defined in "MaxsuPoise.ini", repersents the base poise health of the hit target.
-
-2. **BaseMass**: Value defined in the race form, vary for actor of different races, represents the base mass value of the hit target.
-3. **Scale**: A standalone value for each actors, represents the body scale of the hit target.
-4. **BaseArmorPoiseHealth**: Global value that defined in "MaxsuPoise.ini", repersents the extra poise health brought by an armor.
-5. **HeavyArmorPoiseBonus**: Global value that defined in "MaxsuPoise.ini", represents the extra poise health bonus ratio when the armor is heavy armor.
+1. **BasePoiseHealth**: Global value defined in "MaxsuPoise.ini", represents the base poise health of the target (default: 40).
+2. **BaseMass**: Value defined in the race form, varies for actors of different races (e.g., Human=1, Giant=10).
+3. **Scale**: A standalone value for each actor, represents the body scale of the target.
+4. **BaseArmorPoiseHealth**: Global value defined in "MaxsuPoise.ini", represents the extra poise health per armor piece (default: 50).
+5. **HeavyArmorPoiseBonus**: Global value defined in "MaxsuPoise.ini", represents the extra poise bonus for heavy armor (default: 0.5 = +50%).
+6. **ArmorRating**: ⭐ NEW - The target's total armor rating (damage resist actor value).
+7. **ArmorRatingScale**: ⭐ NEW - Conversion factor for armor rating to poise (default: 0.5).
+8. **CurrentStamina**: ⭐ NEW - The target's current stamina value.
+9. **MaxStamina**: ⭐ NEW - The target's maximum stamina value.
+10. **MinStaminaMult**: ⭐ NEW - Minimum poise multiplier when exhausted (default: 0.5 = 50%).
 
 ### Formula:
 
 ```
-LightArmorHealth = BaseArmorPoiseHealth
+ActorPoiseHealth = BasePoiseHealth × BaseMass × Scale
 
-HeavyArmorHealth =  LightArmorHealth * (1 + HeavyArmorPoiseBonus)
+ArmorPoiseHealth = Σ(BaseArmorPoiseHealth × SlotMultiplier × [1 + HeavyArmorBonus if heavy])
 
-TotalPoiseHealth = BasePoiseHealth * BaseMass * Scale + WornLightArmorNums * LightArmorHealth + WornHeavyArmorNums * HeavyArmorHealth
+ArmorRatingBonus = ArmorRating × ArmorRatingScale
+
+StaminaPenalty = MAX(MinStaminaMult, CurrentStamina / MaxStamina)
+
+TotalPoiseHealth = (ActorPoiseHealth + ArmorPoiseHealth + ArmorRatingBonus) × StaminaPenalty
 ```
 
----
+#### Core Variables:
+1. **BaseMeleePoiseDamage**: Base melee poise damage value (default: 10.5)
+2. **BaseRangePoiseDamage**: Base ranged poise damage value (default: 10.5)
+3. **BaseMagicPoiseDamage**: Base magic poise damage value (default: 100.0)
 
-<br/>
+#### Weapon Identification (Priority Order):
+1. **MaxsuPoise_UniqueWeapStagger** keyword → Uses weapon's custom stagger value
+2. **Weapon Keywords** ⭐ NEW → Checks `[WeaponKeywordMult]` section (Animated Armoury support)
+3. **Weapon Type** → Falls back to `[WeaponTypeMult]` section (vanilla weapons)
 
-## Calculating Poise Damage
+#### Standard Variables:
+4. **AnimationDamageMult**: Multiplier from attack animation annotations (currently 0.0, reserved)
+5. **AttackDataStagger**: Stagger offset from attack data (power attacks, etc.)
+6. **StrengthMult**: `(AttackerMass × AttackerScale) / (TargetMass × TargetScale)`
+7. **ModTargetStagger**: Perk multiplier affecting target stagger (attacker's perks)
+8. **ModIncomingStagger**: Perk multiplier for incoming stagger (target's perks)
+9. **BlockingMult**: Blocking reduction (0 if fully blocked, 1-percentBlocked if partial)
 
-### List of Variables:
+#### New Requiem Variables:
+10. **WeaponWeight** ⭐ NEW: Physical weight of the weapon in kg
+11. **WeaponWeightScale** ⭐ NEW: Multiplier for weight impact (default: 0.05)
+12. **WeaponDamage** ⭐ NEW: Base damage stat of the weapon
+13. **WeaponDamageScale** ⭐ NEW: Multiplier for damage impact (default: 0.015)
+14. **CriticalHit** ⭐ NEW: Whether the hit was a critical hit
+15. **CriticalHitMult** ⭐ NEW: Critical hit multiplier (default: 2.0)
+16. **VelocityMult** ⭐ NEW: Bonus for moving/sprinting (default: 1.3)
 
-1. **BaseMeleePoiseDamage**: Global value that defined in "MaxsuPoise.ini", represents the base melee poise damage of the attacker cause to the hit target.
+### Formulas:
 
-2. **BaseRangePoiseDamage**: Global value that defined in "MaxsuPoise.ini", represents the base range poise damage of the attacker cause to the hit target.
-3. **WeaponDamageMult**: If the weapon form has keyword named _MaxsuPoise_UniqueWeapStagger_, read from the stagger ratio defined inside the weapon form. If the keyword not existed, read from the value that defined in "MaxsuPoise.ini".
-4. **AnimationDamageMult**: Poise damage mult ratio that read from the attack animation annotations of the attacker.
-5. **AttackDataStagger**: Poise damage mult ratio that read from the current attack data stagger value of the attacker.
-6. **BaseMagicPoiseDamage**: Global value that defined in "MaxsuPoise.ini", represents the base magic effect poise damage of the attacker cause to the hit target. **Only the magic effect with stagger archetype could deal poise damage thus stagger the hit target!**
-7. **MagicMagnitude**: The magnitude value from the stagger magic effect attached to the spell form.
-8. **ModTargetStagger**: The ModTargetStagger perk ratio of the attacker.
-9. **ModIncomingStagger**: The ModIncomingStagger perk ratio of the hit target.
-10. **BlockingMult**:
-    According to the `BlockedMode` on MaxsuPoise.ini, there are two cases: If BlockedMode is set to `PercentBlocked`，the value equal to (1 - vanillaBlockedPercent). If BlockedMode is set to `FullyBlocked`, the value equal to 0.
-11. **StrengthMult**: `(attacker BaseMass * attacker Scale) / (target BaseMass * target Scale)`
+#### **Physical Damage** (Melee/Ranged):
+
+```
+WeaponMaterialMult = 1.0 + (WeaponWeight × WeaponWeightScale) + (WeaponDamage × WeaponDamageScale)
+
+PoiseDamage = BaseDamage × 
+              (WeaponTypeMult + StrengthMult + AttackDataStagger) × 
+              WeaponMaterialMult × 
+              (1 + AnimationDamageMult) × 
+              VelocityMult × 
+              CriticalHitMult × 
+              ModTargetStagger × 
+              ModIncomingStagger
+
+If blocked: PoiseDamage *= BlockingMult
+```
+
+**Example Calculation (Daedric Warhammer Sprint Critical):**
+- Base: 10.5
+- Type: 2.0 (TwoHandAxe/Warhammer)
+- Strength: 1.0 (equal mass)
+- Material: 1.0 + (27×0.05) + (27×0.015) = 2.755
+- Velocity: 1.3 (sprinting)
+- Critical: 2.0
+- **Result: 10.5 × 3.0 × 2.755 × 1.3 × 2.0 = 225 poise damage!**
+
+#### **Magic Damage**:
+
+```
+MagicPoiseDamage = BaseMagicPoiseDamage × StaggerMagnitude × ModTargetStagger × ModIncomingStagger
+```
+
+**Note:** Only magic effects with **Stagger archetype** deal poise damage!
+
+#### **Weapon Keyword Support** ⭐ NEW:
+
+Custom weapons (Animated Armoury, etc.) can be configured via keywords:
+```ini
+[WeaponKeywordMult]
+WeapTypeRapier = 0.800000
+WeapTypeSpear = 1.500000
+WeapTypePike = 1.800000
+WeapTypeHalberd = 1.800000
+```
+
+Priority: Unique Keywords > Custom Keywords > Vanilla Type > Default (0)ale) / (target BaseMass * target Scale)`
 
 ### Formula:
 
@@ -170,3 +259,45 @@ Get the maximum value between KeywordImmuneLevel and AnimationImmuneLevel.
 ---
 
 <br/>
+
+## TrueHUD Integration
+
+### Overview
+
+MaxsuPoise integrates with [TrueHUD](https://www.nexusmods.com/skyrimspecialedition/mods/62775) to display poise as a special resource bar. This is **completely optional** - MaxsuPoise works with or without TrueHUD.
+
+### Features:
+
+1. **Poise Bar Display**
+   - Shows current poise / maximum poise in real-time
+   - Updates dynamically based on armor, stamina, and other factors
+   - Visible for player and all NPCs with info bars
+
+2. **Phantom Bar Effect**
+   - When poise decreases, a "phantom" bar shows the lost amount
+   - Fades away gradually for visual feedback
+   - Helps players understand how much poise was just lost
+
+3. **Visual Feedback**
+   - **Long Flash**: Triggered when poise breaks completely (largest stagger)
+   - **Short Flash**: Triggered on medium or large staggers (without breaking)
+   - **No Flash**: Small staggers don't trigger visual effects (clarity)
+
+### Configuration:
+
+Users can customize bar colors in TrueHUD's MCM:
+- **Bar Color**: Main poise bar color
+- **Phantom Color**: Lost poise visualization
+- **Background Color**: Empty portion of bar
+- **Flash Color**: Flash effect color
+
+### Technical Details:
+
+- Uses TrueHUD's Special Resource Bar API (v3/v4)
+- Automatically requests control on game load
+- Falls back gracefully if another mod uses the special bar
+- No performance impact - leverages existing TrueHUD rendering
+
+See [TrueHUD Integration Documentation](../TrueHUD_Integration.md) for more details.
+
+---
