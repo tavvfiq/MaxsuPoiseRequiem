@@ -55,9 +55,6 @@ namespace MaxsuPoise
 		else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
 				TryStagger(target, 0.25f * (staggerLevel)+0.01f, aggressor);
-				if (staggerLevel >= StaggerLevel::kMedium) {
-					TrueHUDHandler::GetSingleton()->FlashPoiseBar(target, false);
-				}
 			}
 		}
 

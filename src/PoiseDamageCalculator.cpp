@@ -28,6 +28,11 @@ namespace MaxsuPoise
 			weapDamageMult = GetCreatureDamageMult(aggressor);
 			weapMaterialMult = 1.0f;
 		}
+		
+		// Fallback: if no weapon type matched, return 0 damage
+		if (weapDamageMult == 0.f) {
+			return 0.f;
+		}
 		float animDamageMult = aggressor ? GetAnimationDamageMult(aggressor) : 0.f;
 		float attackDataMult = GetAttackDataDamageMult(a_hitData->attackData.get());
 		float criticalMult = GetCriticalHitMult(a_hitData);
@@ -99,10 +104,18 @@ namespace MaxsuPoise
 		};
 
 		auto blockedMode = GetGameSettingUInt("uMaxsuPoise_BlockedMode", 0);
-		if (a_hitData && blockedMode == BlockedModes::kPercentBlocked)
+		
+		if (blockedMode == BlockedModes::kFullyBlocked) {
+			// Fully blocked mode: 0 damage if blocked, 1.0 if not blocked
+			if (a_hitData && a_hitData->percentBlocked > 0.f)
+				return 0.f;
+			return 1.0f;
+		}
+		
+		// Percent blocked mode: scale damage by block percent
+		if (a_hitData)
 			return (1.f - std::clamp(a_hitData->percentBlocked, 0.f, 1.f));
-
-		return 0.f;
+		return 1.0f;
 	}
 
 	float PoiseDamageCalculator::GetStrengthMult(RE::Actor* a_aggressor, RE::Actor* a_target)
@@ -118,8 +131,7 @@ namespace MaxsuPoise
 			return 1.0f;
 
 		auto weight = a_weapon->GetWeight();
-		auto weapData = a_weapon->weaponData;
-		auto damage = weapData ? weapData->damage : 0;
+		auto damage = a_weapon->GetAttackDamage();
 		
 		auto weightScale = GetGameSettingFloat("fMaxsuPoise_WeaponWeightScale", 0.05f);
 		auto damageScale = GetGameSettingFloat("fMaxsuPoise_WeaponDamageScale", 0.015f);

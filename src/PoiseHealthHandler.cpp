@@ -71,7 +71,7 @@ namespace MaxsuPoise
 		if (!a_target)
 			return 0.f;
 
-		auto armorRating = a_target->GetActorValue(RE::ActorValue::kDamageResist);
+		auto armorRating = a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kDamageResist);
 		auto armorScale = GetGameSettingFloat("fMaxsuPoise_ArmorRatingScale", 0.5f);
 		
 		return armorRating * armorScale;
@@ -86,8 +86,8 @@ namespace MaxsuPoise
 		if (race && !race->AllowsPCDialogue())
 			return 1.0f;
 
-		auto currentStamina = a_target->GetActorValue(RE::ActorValue::kStamina);
-		auto maxStamina = a_target->GetPermanentActorValue(RE::ActorValue::kStamina);
+		auto currentStamina = a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kStamina);
+		auto maxStamina = a_target->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kStamina);
 		
 		if (maxStamina <= 0.f)
 			return 1.0f;
