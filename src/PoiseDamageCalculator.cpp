@@ -42,6 +42,10 @@ namespace MaxsuPoise
 		float StrengthMult = GetStrengthMult(aggressor, target);
 		float BlockingMult = GetBlockingMult(a_hitData);
 
+		// Guard against perk multipliers being 0 (should be 1.0 as neutral)
+		if (ModTargetStagger == 0.f) ModTargetStagger = 1.0f;
+		if (ModIncomingStagger == 0.f) ModIncomingStagger = 1.0f;
+
 		result = baseWeapDamage * (weapDamageMult + StrengthMult + attackDataMult) * weapMaterialMult * (1 + animDamageMult) * velocityMult * criticalMult * ModTargetStagger * ModIncomingStagger;
 		if (a_hitData->flags.any(RE::HitData::Flag::kBlocked)) {
 			result *= BlockingMult;
@@ -210,6 +214,9 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetPerkModTargetStagger(RE::Actor* a_aggressor, RE::Actor* a_target)
 	{
+		if (!a_aggressor || !a_target)
+			return 1.0f;
+		
 		using EntryPoint = RE::BGSEntryPointPerkEntry::EntryPoint;
 		float result = 1.0f;
 		ApplyPerkEntryPoint(EntryPoint::kModTargetStagger, a_aggressor, a_target, &result);
@@ -218,6 +225,9 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetPerkModIncomingStagger(RE::Actor* a_aggressor, RE::Actor* a_target)
 	{
+		if (!a_aggressor || !a_target)
+			return 1.0f;
+		
 		using EntryPoint = RE::BGSEntryPointPerkEntry::EntryPoint;
 		float result = 1.0f;
 		ApplyPerkEntryPoint(EntryPoint::kModIncomingStagger, a_target, a_aggressor, &result);
