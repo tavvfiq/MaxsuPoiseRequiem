@@ -33,11 +33,8 @@ namespace MaxsuPoise
 			return;
 
 		auto staggerProtectTime = StaggerProtectHandler::GetStaggerProtectTimer(target);
-	if (staggerProtectTime > 0.f && RE::IsStaggering(target)) {
-		// Flash bar to indicate stagger protection is active
-		TrueHUDHandler::GetSingleton()->FlashPoiseBar(target, false);
-		return;
-	}
+		if (staggerProtectTime > 0.f && RE::IsStaggering(target))
+			return;
 
 		auto totalPoiseHealth = PoiseHealthHandler::GetTotalPoiseHealth(target);
 		auto currentPoiseHealth = PoiseHealthHandler::GetCurrentPoiseHealth(target);
@@ -58,6 +55,12 @@ namespace MaxsuPoise
 		else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
 				TryStagger(target, 0.25f * (staggerLevel)+0.01f, aggressor);
+				if (RE::IsStaggering(target)) {
+					// Add small protection after small/medium staggers to prevent animation lock
+					float protectionMult = GetGameSettingFloat("fMaxsuPoise_SmallStaggerProtectMult", 0.3f);
+					float protectionTime = StaggerProtectHandler::GetMaxStaggerProtectTime() * protectionMult;
+					StaggerProtectHandler::SetStaggerProtectTimer(target, protectionTime);
+				}
 			}
 		}
 
