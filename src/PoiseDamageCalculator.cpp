@@ -133,10 +133,15 @@ namespace MaxsuPoise
 		if (!a_aggressor)
 			return 1.0f;
 
-		auto velocity = a_aggressor->AsActorState()->actorState1.movingForward || 
-		                a_aggressor->AsActorState()->actorState1.sprinting;
+		auto actorState = a_aggressor->AsActorState();
+		if (!actorState)
+			return 1.0f;
 		
-		if (velocity) {
+		// Check if sprinting or moving forward (charging attack)
+		bool isSprinting = actorState->IsSprinting();
+		bool isMovingForward = actorState->actorState1.movingForward;
+		
+		if (isSprinting || isMovingForward) {
 			return GetGameSettingFloat("fMaxsuPoise_VelocityMult", 1.3f);
 		}
 
