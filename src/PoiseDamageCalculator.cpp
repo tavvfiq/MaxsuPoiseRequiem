@@ -47,27 +47,38 @@ namespace MaxsuPoise
 			result *= BlockingMult;
 		}
 
-	// Debug log for zero damage
-	if (result == 0.f && target && target == RE::Console::GetSelectedRef().get()) {
-		std::ostringstream logs;
-		logs << "[DEBUG] Zero Damage Breakdown:" << std::endl;
-		logs << "  baseWeapDamage: " << baseWeapDamage << std::endl;
-		logs << "  weapDamageMult: " << weapDamageMult << std::endl;
-		logs << "  StrengthMult: " << StrengthMult << std::endl;
-		logs << "  attackDataMult: " << attackDataMult << std::endl;
-		logs << "  weapMaterialMult: " << weapMaterialMult << std::endl;
-		logs << "  animDamageMult: " << animDamageMult << std::endl;
-		logs << "  velocityMult: " << velocityMult << std::endl;
-		logs << "  criticalMult: " << criticalMult << std::endl;
-		logs << "  ModTargetStagger: " << ModTargetStagger << std::endl;
-		logs << "  ModIncomingStagger: " << ModIncomingStagger << std::endl;
-		logs << "  BlockingMult: " << BlockingMult << std::endl;
-		logs << "  IsBlocked: " << (a_hitData->flags.any(RE::HitData::Flag::kBlocked) ? "YES" : "NO") << std::endl;
-		CPrint(logs.str().c_str());
+		// Debug log for zero damage
+		if (result == 0.f && target && target == RE::Console::GetSelectedRef().get()) {
+			std::ostringstream logs;
+			logs << "[DEBUG] Zero Damage Breakdown:" << std::endl;
+			logs << "  baseWeapDamage: " << baseWeapDamage << std::endl;
+			logs << "  weapDamageMult: " << weapDamageMult << std::endl;
+			logs << "  StrengthMult: " << StrengthMult << std::endl;
+			logs << "  attackDataMult: " << attackDataMult << std::endl;
+			logs << "  weapMaterialMult: " << weapMaterialMult << std::endl;
+			logs << "  animDamageMult: " << animDamageMult << std::endl;
+			logs << "  velocityMult: " << velocityMult << std::endl;
+			logs << "  criticalMult: " << criticalMult << std::endl;
+			logs << "  ModTargetStagger: " << ModTargetStagger << std::endl;
+			logs << "  ModIncomingStagger: " << ModIncomingStagger << std::endl;
+			logs << "  BlockingMult: " << BlockingMult << std::endl;
+			logs << "  IsBlocked: " << (a_hitData->flags.any(RE::HitData::Flag::kBlocked) ? "YES" : "NO") << std::endl;
+			CPrint(logs.str().c_str());
+		}
+
+		return result;
 	}
 
+	float PoiseDamageCalculator::GetBaseMeleePoiseDamage()
+	{
+		return GetGameSettingFloat("fMaxsuPoise_BaseMeleePoiseDamage", 10.5f);
+	}
+
+	float PoiseDamageCalculator::GetBaseRangePoiseDamage()
+	{
 		return GetGameSettingFloat("fMaxsuPoise_BaseRangePoiseDamage", 10.5f);
 	}
+
 
 	float PoiseDamageCalculator::GetWeaponDamageMult(RE::TESObjectWEAP* a_weapon)
 	{
