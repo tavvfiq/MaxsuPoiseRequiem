@@ -12,6 +12,7 @@ namespace MaxsuPoise
 		static float GetBaseMeleePoiseDamage();
 		static float GetBaseRangePoiseDamage();
 		static float GetWeaponDamageMult(RE::TESObjectWEAP* a_weapon);
+		static float GetCreatureDamageMult(RE::Actor* a_aggressor);
 		static float GetAnimationDamageMult(RE::Actor* a_aggressor);
 		static float GetAttackDataDamageMult(RE::BGSAttackData* a_attackData);
 		static float GetBlockingMult(const RE::HitData* a_hitData);
@@ -19,6 +20,7 @@ namespace MaxsuPoise
 		static float GetWeaponMaterialMult(RE::TESObjectWEAP* a_weapon);
 		static float GetCriticalHitMult(const RE::HitData* a_hitData);
 		static float GetVelocityMult(RE::Actor* a_aggressor);
+		static bool IsCreature(RE::Actor* a_actor);
 
 		static float GetBaseMagicPoiseDamage();
 

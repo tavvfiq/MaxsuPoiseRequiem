@@ -15,8 +15,19 @@ namespace MaxsuPoise
 		auto sourceProjectile = a_hitData->sourceRef ? a_hitData->sourceRef.get().get()->AsProjectile() : nullptr;
 
 		float baseWeapDamage = sourceProjectile ? GetBaseRangePoiseDamage() : GetBaseMeleePoiseDamage();
-		float weapDamageMult = sourceProjectile ? GetWeaponDamageMult(sourceProjectile->GetProjectileRuntimeData().weaponSource) : GetWeaponDamageMult(a_hitData->weapon);
-		float weapMaterialMult = sourceProjectile ? 1.0f : GetWeaponMaterialMult(a_hitData->weapon);
+		
+		float weapDamageMult = 0.f;
+		float weapMaterialMult = 1.0f;
+		
+		if (sourceProjectile) {
+			weapDamageMult = GetWeaponDamageMult(sourceProjectile->GetProjectileRuntimeData().weaponSource);
+		} else if (a_hitData->weapon) {
+			weapDamageMult = GetWeaponDamageMult(a_hitData->weapon);
+			weapMaterialMult = GetWeaponMaterialMult(a_hitData->weapon);
+		} else if (aggressor && IsCreature(aggressor)) {
+			weapDamageMult = GetCreatureDamageMult(aggressor);
+			weapMaterialMult = 1.0f;
+		}
 		float animDamageMult = aggressor ? GetAnimationDamageMult(aggressor) : 0.f;
 		float attackDataMult = GetAttackDataDamageMult(a_hitData->attackData.get());
 		float criticalMult = GetCriticalHitMult(a_hitData);
@@ -179,5 +190,39 @@ namespace MaxsuPoise
 		float result = 1.0f;
 		ApplyPerkEntryPoint(EntryPoint::kModIncomingStagger, a_target, a_aggressor, &result);
 		return result;
+	}
+
+	bool PoiseDamageCalculator::IsCreature(RE::Actor* a_actor)
+	{
+		if (!a_actor)
+			return false;
+
+		auto race = a_actor->GetRace();
+		if (!race)
+			return false;
+
+		return !race->AllowsPCDialogue();
+	}
+
+	float PoiseDamageCalculator::GetCreatureDamageMult(RE::Actor* a_aggressor)
+	{
+		if (!a_aggressor)
+			return 0.0f;
+
+		auto race = a_aggressor->GetRace();
+		if (!race)
+			return 0.0f;
+
+		auto raceName = race->GetFormEditorID();
+		if (!raceName || strlen(raceName) == 0)
+			return GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+
+		for (const auto& [raceKeyword, mult] : SettingsHandler::creatureRaceMultMap) {
+			if (_strnicmp(raceName, raceKeyword.c_str(), raceKeyword.length()) == 0) {
+				return mult;
+			}
+		}
+
+		return GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
 	}
 }

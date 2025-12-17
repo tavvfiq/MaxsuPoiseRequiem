@@ -54,6 +54,7 @@ This document introduces you to the detailed mechanics of MaxsuPoise, including 
 8. **CurrentStamina**: ⭐ NEW - The target's current stamina value.
 9. **MaxStamina**: ⭐ NEW - The target's maximum stamina value.
 10. **MinStaminaMult**: ⭐ NEW - Minimum poise multiplier when exhausted (default: 0.5 = 50%).
+12. **CreaturePoiseHealthMult**: ⭐ NEW - Additional multiplier for creature races (configurable per race).
 
 ### Formula:
 
@@ -64,10 +65,22 @@ ArmorPoiseHealth = Σ(BaseArmorPoiseHealth × SlotMultiplier × [1 + HeavyArmorB
 
 ArmorRatingBonus = ArmorRating × ArmorRatingScale
 
-StaminaPenalty = MAX(MinStaminaMult, CurrentStamina / MaxStamina)
+StaminaPenalty = MAX(MinStaminaMult, CurrentStamina / MaxStamina)  [Humanoids only]
+StaminaPenalty = 1.0  [Creatures - no stamina penalty]
 
-TotalPoiseHealth = (ActorPoiseHealth + ArmorPoiseHealth + ArmorRatingBonus) × StaminaPenalty
+CreaturePoiseHealthMult = Race-specific multiplier (1.0 for humanoids, configurable for creatures)
+
+TotalPoiseHealth = (ActorPoiseHealth + ArmorPoiseHealth + ArmorRatingBonus) × StaminaPenalty × CreaturePoiseHealthMult
 ```
+
+**Creature Poise Health:** Creatures get an additional race-specific multiplier on top of their BaseMass scaling. They also **ignore stamina penalties** - creatures don't get exhausted like humanoids. This allows fine-tuning creature durability independently from their damage output.
+
+**Examples:**
+- **Dragon**: BaseMass 4-6 × 1.5 creature mult = 6-9 effective mass (300-450 base poise + natural AR bonus)
+- **Giant**: BaseMass 10 × 1.3 creature mult = 13 effective mass (650 base poise!)
+- **Wolf**: BaseMass 0.5 × 1.0 creature mult = 0.5 (25 base poise, fragile)
+
+Configure creature poise multipliers in `[CreaturePoiseMult]` section using race prefix matching.
 
 #### Core Variables:
 1. **BaseMeleePoiseDamage**: Base melee poise damage value (default: 10.5)
@@ -143,26 +156,34 @@ WeapTypePike = 1.800000
 WeapTypeHalberd = 1.800000
 ```
 
-Priority: Unique Keywords > Custom Keywords > Vanilla Type > Default (0)ale) / (target BaseMass * target Scale)`
+Priority: Unique Keywords > Custom Keywords > Vanilla Type > Default (0)
 
-### Formula:
+#### **Creature Attack Support** ⭐ NEW:
 
-- **Physicial Damage**:
-
-```
-Melee/RangePoiseDamage = BaseMelee/RangePoiseDamage * (WeaponDamageMult + StrengthMult + AttackDataStagger) * (AnimationDamageMult + 1) * ModTargetStagger * ModIncomingStagger
-```
-
-If the hit is blocked, then `PoiseDamage *= BlockingMult`
-<br/>
-
-- **Magic Damage**:
+When creatures attack with unarmed/natural weapons (claws, bites), poise damage is calculated based on race:
 
 ```
-  MagicPoiseDamage = BaseMagicPoiseDamage * MagicMagnitude
+CreatureDamage = BaseDamage × 
+                 CreatureRaceMult × 
+                 (1 + AttackDataStagger) × 
+                 StrengthMult × 
+                 CriticalHitMult × 
+                 VelocityMult × 
+                 ModTargetStagger × 
+                 ModIncomingStagger
 ```
 
-**Only works for magic effect with stagger archetype!**
+**Creature Detection:** Non-humanoid races (cannot dialogue with player) use race-based multipliers instead of weapon multipliers.
+
+**Example Creature Multipliers:**
+- Dragons: 5.0x (devastating)
+- Giants: 4.5x
+- Trolls/Werewolves: 3.0x
+- Bears: 2.5x
+- Wolves: 1.2x
+- Skeevers: 0.5x
+
+Configure in `[CreatureRaceMult]` section with prefix matching (e.g., "Dragon" matches "DragonPriest", "DragonRace", etc.)
 
 ---
 

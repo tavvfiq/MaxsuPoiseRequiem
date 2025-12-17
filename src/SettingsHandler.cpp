@@ -10,6 +10,8 @@ namespace MaxsuPoise
 		UpdateWeapTypeMult();
 		InitWeapKeywordMult();
 		InitArmorSlotMult();
+		InitCreatureRaceMult();
+		InitCreaturePoiseMult();
 
 		static SettingsHandler singleton;
 		auto eventSource = SKSE::GetModCallbackEventSource();
@@ -92,6 +94,46 @@ namespace MaxsuPoise
 			if (armorSlotEnum.has_value()) {
 				armorSlotMultMap[armorSlotEnum.value()] = (std::stof(value));
 			}
+		}
+	}
+
+	void SettingsHandler::InitCreatureRaceMult()
+	{
+		static constexpr char creatureFile[] = R"(Data\SKSE\Plugins\MaxsuPoise_Creature.ini)";
+
+		CSimpleIniA ini;
+		if (ini.LoadFile(creatureFile))
+			ERROR("Get Error When loading file {}", creatureFile);
+
+		const CSimpleIniA::TKeyVal* section = ini.GetSection("CreatureRaceMult");
+		if (!section) {
+			return;
+		}
+
+		for (CSimpleIniA::TKeyVal::const_iterator it = section->begin(); it != section->end(); ++it) {
+			const char* key = it->first.pItem;
+			const char* value = it->second;
+			creatureRaceMultMap[key] = std::stof(value);
+		}
+	}
+
+	void SettingsHandler::InitCreaturePoiseMult()
+	{
+		static constexpr char creatureFile[] = R"(Data\SKSE\Plugins\MaxsuPoise_Creature.ini)";
+
+		CSimpleIniA ini;
+		if (ini.LoadFile(creatureFile))
+			ERROR("Get Error When loading file {}", creatureFile);
+
+		const CSimpleIniA::TKeyVal* section = ini.GetSection("CreaturePoiseMult");
+		if (!section) {
+			return;
+		}
+
+		for (CSimpleIniA::TKeyVal::const_iterator it = section->begin(); it != section->end(); ++it) {
+			const char* key = it->first.pItem;
+			const char* value = it->second;
+			creaturePoiseMultMap[key] = std::stof(value);
 		}
 	}
 
