@@ -53,25 +53,27 @@ namespace MaxsuPoise
 
 		// Debug log (only when enabled and target is selected)
 		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
-		if (enableDebug && target == RE::Console::GetSelectedRef().get()) {
-			std::ostringstream logs;
-			logs << "[DEBUG] Poise Damage Calculation:" << std::endl;
-			logs << "  Result: " << result << std::endl;
-			logs << "  baseWeapDamage: " << baseWeapDamage << std::endl;
-			logs << "  weapDamageMult: " << weapDamageMult << std::endl;
-			logs << "  StrengthMult: " << StrengthMult << std::endl;
-			logs << "  attackDataMult: " << attackDataMult << std::endl;
-			logs << "  weapMaterialMult: " << weapMaterialMult << std::endl;
-			logs << "  animDamageMult: " << animDamageMult << std::endl;
-			logs << "  velocityMult: " << velocityMult << std::endl;
-			logs << "  criticalMult: " << criticalMult << std::endl;
-			logs << "  ModTargetStagger: " << ModTargetStagger << std::endl;
-			logs << "  ModIncomingStagger: " << ModIncomingStagger << std::endl;
-			logs << "  BlockingMult: " << BlockingMult << std::endl;
-			logs << "  IsBlocked: " << (a_hitData->flags.any(RE::HitData::Flag::kBlocked) ? "YES" : "NO") << std::endl;
-			CPrint(logs.str().c_str());
+		auto selectedRef = RE::Console::GetSelectedRef();
+		if (selectedRef && target == selectedRef.get()) {
+			if (enableDebug) {
+				std::ostringstream logs;
+				logs << "[DEBUG] Poise Damage Calculation:" << std::endl;
+				logs << "  Result: " << result << std::endl;
+				logs << "  baseWeapDamage: " << baseWeapDamage << std::endl;
+				logs << "  weapDamageMult: " << weapDamageMult << std::endl;
+				logs << "  StrengthMult: " << StrengthMult << std::endl;
+				logs << "  attackDataMult: " << attackDataMult << std::endl;
+				logs << "  weapMaterialMult: " << weapMaterialMult << std::endl;
+				logs << "  animDamageMult: " << animDamageMult << std::endl;
+				logs << "  velocityMult: " << velocityMult << std::endl;
+				logs << "  criticalMult: " << criticalMult << std::endl;
+				logs << "  ModTargetStagger: " << ModTargetStagger << std::endl;
+				logs << "  ModIncomingStagger: " << ModIncomingStagger << std::endl;
+				logs << "  BlockingMult: " << BlockingMult << std::endl;
+				logs << "  IsBlocked: " << (a_hitData->flags.any(RE::HitData::Flag::kBlocked) ? "YES" : "NO") << std::endl;
+				CPrint(logs.str().c_str());
+			}
 		}
-
 		return result;
 	}
 
