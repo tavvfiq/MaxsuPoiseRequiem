@@ -51,10 +51,12 @@ namespace MaxsuPoise
 			result *= BlockingMult;
 		}
 
+		// Debug log (only when enabled and target is selected)
 		bool enableDebug = GetGameSettingUInt("uMaxsuPoise_EnableDebugLog", 0) != 0;
-		if (enableDebug && target && target == RE::Console::GetSelectedRef().get()) {
+		if (enableDebug && target == RE::Console::GetSelectedRef().get()) {
 			std::ostringstream logs;
-			logs << "[DEBUG] Zero Damage Breakdown:" << std::endl;
+			logs << "[DEBUG] Poise Damage Calculation:" << std::endl;
+			logs << "  Result: " << result << std::endl;
 			logs << "  baseWeapDamage: " << baseWeapDamage << std::endl;
 			logs << "  weapDamageMult: " << weapDamageMult << std::endl;
 			logs << "  StrengthMult: " << StrengthMult << std::endl;

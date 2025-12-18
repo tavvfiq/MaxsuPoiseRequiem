@@ -68,10 +68,14 @@ namespace MaxsuPoise
 		RegenDelayHandler::SetPoiseRegenDelayTimer(target, RegenDelayHandler::GetMaxRegenDelayTime());
 
 		// Debug log (only when enabled)
-		bool enableDebug = GetGameSettingUInt("uMaxsuPoise_EnableDebugLog", 0) != 0;
-		if (enableDebug) {
-			auto selectedRef = RE::Console::GetSelectedRef();
-			if (selectedRef && target == selectedRef.get()) {
+		std::uint32_t debugValue = GetGameSettingUInt("uMaxsuPoise_EnableDebugLog", 0);
+		bool enableDebug = debugValue != 0;
+		
+		// Always print debug value for testing
+		auto selectedRef = RE::Console::GetSelectedRef();
+		if (selectedRef && target == selectedRef.get()) {
+			CPrint("[DEBUG] uMaxsuPoise_EnableDebugLog value: %d, enableDebug: %s", debugValue, enableDebug ? "true" : "false");
+			if (enableDebug) {
 				std::ostringstream logs;
 				logs << "-------MaxsuPoise Weapon Stagger Result-------" << std::endl;
 
