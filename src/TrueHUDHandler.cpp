@@ -23,6 +23,10 @@ namespace MaxsuPoise
 		if (g_trueHUD) {
 			INFO("TrueHUD API acquired successfully");
 
+			// Force release any existing control (e.g., from previous poise mods like LOKI)
+			g_trueHUD->ReleaseSpecialResourceBarControl(g_pluginHandle);
+			INFO("Released any existing TrueHUD control");
+
 			auto result = g_trueHUD->RequestSpecialResourceBarsControl(g_pluginHandle);
 			if (result == TRUEHUD_API::APIResult::OK) {
 				INFO("Special resource bar control acquired");
