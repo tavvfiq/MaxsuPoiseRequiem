@@ -7,6 +7,7 @@ namespace MaxsuPoise
 
 	bool SettingsHandler::Register()
 	{
+		InitGameSettings();
 		UpdateWeapTypeMult();
 		InitWeapKeywordMult();
 		InitArmorSlotMult();
@@ -135,6 +136,26 @@ namespace MaxsuPoise
 			const char* value = it->second;
 			creaturePoiseMultMap[key] = std::stof(value);
 		}
+	}
+
+	void SettingsHandler::InitGameSettings()
+	{
+		CSimpleIniA ini;
+		if (ini.LoadFile(fileName))
+			ERROR("Get Error When loading file {}", fileName);
+
+		const CSimpleIniA::TKeyVal* section = ini.GetSection("GameSettings");
+		if (!section) {
+			return;
+		}
+
+		for (CSimpleIniA::TKeyVal::const_iterator it = section->begin(); it != section->end(); ++it) {
+			const char* key = it->first.pItem;
+			const char* value = it->second;
+			gameSettingsMap[key] = value;
+		}
+
+		INFO("Loaded {} game settings from INI", gameSettingsMap.size());
 	}
 
 }

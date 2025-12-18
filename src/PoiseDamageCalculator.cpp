@@ -52,7 +52,7 @@ namespace MaxsuPoise
 		}
 
 		// Debug log (only when enabled and target is selected)
-		bool enableDebug = GetGameSettingUInt("uMaxsuPoise_EnableDebugLog", 0) != 0;
+		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
 		if (enableDebug && target == RE::Console::GetSelectedRef().get()) {
 			std::ostringstream logs;
 			logs << "[DEBUG] Poise Damage Calculation:" << std::endl;

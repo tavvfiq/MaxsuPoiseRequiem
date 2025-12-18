@@ -68,8 +68,7 @@ namespace MaxsuPoise
 		RegenDelayHandler::SetPoiseRegenDelayTimer(target, RegenDelayHandler::GetMaxRegenDelayTime());
 
 		// Debug log (only when enabled)
-		std::uint32_t debugValue = GetGameSettingUInt("uMaxsuPoise_EnableDebugLog", 0);
-		bool enableDebug = debugValue != 0;
+		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
 		
 		// Always print debug value for testing
 		auto selectedRef = RE::Console::GetSelectedRef();
@@ -140,7 +139,7 @@ namespace MaxsuPoise
 		RegenDelayHandler::SetPoiseRegenDelayTimer(a_target, RegenDelayHandler::GetMaxRegenDelayTime());
 
 		// Debug log (only when enabled)
-		bool enableDebug = GetGameSettingUInt("uMaxsuPoise_EnableDebugLog", 0) != 0;
+		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
 		if (enableDebug) {
 			auto selectedRef = RE::Console::GetSelectedRef();
 			if (selectedRef && a_target == selectedRef.get()) {

@@ -15,6 +15,7 @@ namespace MaxsuPoise
 		static inline std::map<BipedSlot, float> armorSlotMultMap;
 		static inline std::map<std::string, float> creatureRaceMultMap;
 		static inline std::map<std::string, float> creaturePoiseMultMap;
+		static inline std::map<std::string, std::string> gameSettingsMap;
 
 		static constexpr char modName[] = "MaxsuPoise";
 		static bool Register();
@@ -36,6 +37,7 @@ namespace MaxsuPoise
 		static void InitArmorSlotMult();
 		static void InitCreatureRaceMult();
 		static void InitCreaturePoiseMult();
+		static void InitGameSettings();
 	};
 
 }

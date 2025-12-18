@@ -1,35 +1,56 @@
 #include "Utils.h"
+#include "SettingsHandler.h"
 
 namespace MaxsuPoise
 {
 
 	float GetGameSettingFloat(const std::string a_name, const float a_default)
 	{
-		auto setting = RE::GameSettingCollection::GetSingleton()->GetSetting(a_name.c_str());
-		if (setting) {
-			return setting->GetFloat();
+		auto it = SettingsHandler::gameSettingsMap.find(a_name);
+		if (it != SettingsHandler::gameSettingsMap.end()) {
+			try {
+				return std::stof(it->second);
+			} catch (...) {
+				ERROR("Failed to parse float from setting: {} = {}", a_name, it->second);
+				return a_default;
+			}
 		}
-
 		return a_default;
 	}
 
 	std::uint32_t GetGameSettingUInt(const std::string a_name, const std::uint32_t a_default)
 	{
-		auto setting = RE::GameSettingCollection::GetSingleton()->GetSetting(a_name.c_str());
-		if (setting) {
-			return setting->GetUInt();
+		auto it = SettingsHandler::gameSettingsMap.find(a_name);
+		if (it != SettingsHandler::gameSettingsMap.end()) {
+			try {
+				return static_cast<std::uint32_t>(std::stoul(it->second));
+			} catch (...) {
+				ERROR("Failed to parse uint from setting: {} = {}", a_name, it->second);
+				return a_default;
+			}
 		}
-
 		return a_default;
 	}
 
 	bool GetGameSettingBool(const std::string a_name, const bool a_default)
 	{
-		auto setting = RE::GameSettingCollection::GetSingleton()->GetSetting(a_name.c_str());
-		if (setting) {
-			return setting->GetBool();
+		auto it = SettingsHandler::gameSettingsMap.find(a_name);
+		if (it != SettingsHandler::gameSettingsMap.end()) {
+			try {
+				std::string value = it->second;
+				// Convert to lowercase for case-insensitive comparison
+				std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+				if (value == "true" || value == "1") {
+					return true;
+				} else if (value == "false" || value == "0") {
+					return false;
+				}
+				return std::stoi(it->second) != 0;
+			} catch (...) {
+				ERROR("Failed to parse bool from setting: {} = {}", a_name, it->second);
+				return a_default;
+			}
 		}
-
 		return a_default;
 	}
 
