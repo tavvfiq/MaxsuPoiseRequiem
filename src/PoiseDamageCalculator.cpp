@@ -252,23 +252,45 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetCreatureDamageMult(RE::Actor* a_aggressor)
 	{
-		if (!a_aggressor)
-			return 0.0f;
+		float defaultMult = GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+		
+		if (!a_aggressor) {
+			if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+				CPrint("[DEBUG] GetCreatureDamageMult: aggressor is null, using default: %f", defaultMult);
+			}
+			return defaultMult;
+		}
 
 		auto race = a_aggressor->GetRace();
-		if (!race)
-			return 0.0f;
+		if (!race) {
+			if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+				CPrint("[DEBUG] GetCreatureDamageMult: race is null for actor, using default: %f", defaultMult);
+			}
+			return defaultMult;
+		}
 
 		auto raceName = race->GetFormEditorID();
-		if (!raceName || strlen(raceName) == 0)
-			return GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+		if (!raceName || strlen(raceName) == 0) {
+			float defaultMult = GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+			if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+				CPrint("[DEBUG] GetCreatureDamageMult: empty race name, using default: %f", defaultMult);
+			}
+			return defaultMult;
+		}
 
 		for (const auto& [raceKeyword, mult] : SettingsHandler::creatureRaceMultMap) {
 			if (_strnicmp(raceName, raceKeyword.c_str(), raceKeyword.length()) == 0) {
+				if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+					CPrint("[DEBUG] GetCreatureDamageMult: matched %s with mult %f", raceKeyword.c_str(), mult);
+				}
 				return mult;
 			}
 		}
 
-		return GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+		float defaultMult = GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+		if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+			CPrint("[DEBUG] GetCreatureDamageMult: no match for race %s, using default: %f", raceName, defaultMult);
+		}
+		return defaultMult;
 	}
 }
