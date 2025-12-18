@@ -11,6 +11,12 @@ namespace MaxsuPoise
 		float result = 0.f;
 		if (!a_target || !a_target->GetGraphVariableFloat(CURRENT_POISE_HEALTH_GV, result))
 			WARN("Not Graph Variable Float Found: {}", CURRENT_POISE_HEALTH_GV);
+		
+		// Guard against blocking animation glitch: if graph variable returns 0 but actor is valid,
+		// return total poise health instead to prevent phantom bar flashing
+		if (result == 0.f && a_target && a_target->Is3DLoaded()) {
+			return GetTotalPoiseHealth(a_target);
+		}
 
 		return result;
 	}

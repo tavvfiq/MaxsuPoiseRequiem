@@ -67,23 +67,27 @@ namespace MaxsuPoise
 		PoiseHealthHandler::SetCurrentPoiseHealth(target, currentPoiseHealth);
 		RegenDelayHandler::SetPoiseRegenDelayTimer(target, RegenDelayHandler::GetMaxRegenDelayTime());
 
-		auto selectedRef = RE::Console::GetSelectedRef();
-		if (selectedRef && target == selectedRef.get()) {
-			std::ostringstream logs;
-			logs << "-------MaxsuPoise Weapon Stagger Result-------" << std::endl;
+		// Debug log (only when enabled)
+		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
+		if (enableDebug) {
+			auto selectedRef = RE::Console::GetSelectedRef();
+			if (selectedRef && target == selectedRef.get()) {
+				std::ostringstream logs;
+				logs << "-------MaxsuPoise Weapon Stagger Result-------" << std::endl;
 
-			if (staggerProtectTime > 0.f)
-				logs << "Largest Stagger! TotalHealth: " << totalPoiseHealth << std::endl;
-			else {
-				logs << "TotalHealth: " << totalPoiseHealth << std::endl;
-				logs << "Damage: " << poiseDamage << std::endl;
-				logs << "CurrentHealth: " << currentPoiseHealth << std::endl;
-				logs << "StaggerLevel: " << staggerLevel << std::endl;
-				logs << "ImmuneLevel: " << immuneLevel << std::endl;
+				if (staggerProtectTime > 0.f)
+					logs << "Largest Stagger! TotalHealth: " << totalPoiseHealth << std::endl;
+				else {
+					logs << "TotalHealth: " << totalPoiseHealth << std::endl;
+					logs << "Damage: " << poiseDamage << std::endl;
+					logs << "CurrentHealth: " << currentPoiseHealth << std::endl;
+					logs << "StaggerLevel: " << staggerLevel << std::endl;
+					logs << "ImmuneLevel: " << immuneLevel << std::endl;
+				}
+
+				logs << "---------------------------------------" << std::endl;
+				CPrint(logs.str().c_str());
 			}
-
-			logs << "---------------------------------------" << std::endl;
-			CPrint(logs.str().c_str());
 		}
 	}
 
@@ -131,23 +135,27 @@ namespace MaxsuPoise
 		PoiseHealthHandler::SetCurrentPoiseHealth(a_target, currentPoiseHealth);
 		RegenDelayHandler::SetPoiseRegenDelayTimer(a_target, RegenDelayHandler::GetMaxRegenDelayTime());
 
-		auto selectedRef = RE::Console::GetSelectedRef();
-		if (selectedRef && a_target == selectedRef.get()) {
-			std::ostringstream logs;
-			logs << "-------MaxsuPoise Magic Stagger Result-------" << std::endl;
+		// Debug log (only when enabled)
+		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
+		if (enableDebug) {
+			auto selectedRef = RE::Console::GetSelectedRef();
+			if (selectedRef && a_target == selectedRef.get()) {
+				std::ostringstream logs;
+				logs << "-------MaxsuPoise Magic Stagger Result-------" << std::endl;
 
-			if (staggerProtectTime > 0.f)
-				logs << "Largest Stagger! TotalHealth: " << totalPoiseHealth << std::endl;
-			else {
-				logs << "TotalHealth: " << totalPoiseHealth << std::endl;
-				logs << "Damage: " << poiseDamage << std::endl;
-				logs << "CurrentHealth: " << currentPoiseHealth << std::endl;
-				logs << "StaggerLevel: " << staggerLevel << std::endl;
-				logs << "ImmuneLevel: " << immuneLevel << std::endl;
+				if (staggerProtectTime > 0.f)
+					logs << "Largest Stagger! TotalHealth: " << totalPoiseHealth << std::endl;
+				else {
+					logs << "TotalHealth: " << totalPoiseHealth << std::endl;
+					logs << "Damage: " << poiseDamage << std::endl;
+					logs << "CurrentHealth: " << currentPoiseHealth << std::endl;
+					logs << "StaggerLevel: " << staggerLevel << std::endl;
+					logs << "ImmuneLevel: " << immuneLevel << std::endl;
+				}
+
+				logs << "---------------------------------------" << std::endl;
+				CPrint(logs.str().c_str());
 			}
-
-			logs << "---------------------------------------" << std::endl;
-			CPrint(logs.str().c_str());
 		}
 	}
 

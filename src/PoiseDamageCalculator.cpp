@@ -46,28 +46,9 @@ namespace MaxsuPoise
 		if (ModTargetStagger == 0.f) ModTargetStagger = 1.0f;
 		if (ModIncomingStagger == 0.f) ModIncomingStagger = 1.0f;
 
-		result = baseWeapDamage * (weapDamageMult + StrengthMult + attackDataMult) * weapMaterialMult * (1 + animDamageMult) * velocityMult * criticalMult * ModTargetStagger * ModIncomingStagger;
+		result = baseWeapDamage * weapDamageMult * (1 + attackDataMult) * StrengthMult * weapMaterialMult * (1 + animDamageMult) * velocityMult * criticalMult * ModTargetStagger * ModIncomingStagger;
 		if (a_hitData->flags.any(RE::HitData::Flag::kBlocked)) {
 			result *= BlockingMult;
-		}
-
-		// Debug log for zero damage
-		if (result == 0.f && target && target == RE::Console::GetSelectedRef().get()) {
-			std::ostringstream logs;
-			logs << "[DEBUG] Zero Damage Breakdown:" << std::endl;
-			logs << "  baseWeapDamage: " << baseWeapDamage << std::endl;
-			logs << "  weapDamageMult: " << weapDamageMult << std::endl;
-			logs << "  StrengthMult: " << StrengthMult << std::endl;
-			logs << "  attackDataMult: " << attackDataMult << std::endl;
-			logs << "  weapMaterialMult: " << weapMaterialMult << std::endl;
-			logs << "  animDamageMult: " << animDamageMult << std::endl;
-			logs << "  velocityMult: " << velocityMult << std::endl;
-			logs << "  criticalMult: " << criticalMult << std::endl;
-			logs << "  ModTargetStagger: " << ModTargetStagger << std::endl;
-			logs << "  ModIncomingStagger: " << ModIncomingStagger << std::endl;
-			logs << "  BlockingMult: " << BlockingMult << std::endl;
-			logs << "  IsBlocked: " << (a_hitData->flags.any(RE::HitData::Flag::kBlocked) ? "YES" : "NO") << std::endl;
-			CPrint(logs.str().c_str());
 		}
 
 		return result;
