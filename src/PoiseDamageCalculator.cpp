@@ -18,15 +18,21 @@ namespace MaxsuPoise
 		
 		float weapDamageMult = 0.f;
 		float weapMaterialMult = 1.0f;
+		bool isCreatureAttack = false;
 		
+		// Determine weapon damage multiplier
 		if (sourceProjectile) {
 			weapDamageMult = GetWeaponDamageMult(sourceProjectile->GetProjectileRuntimeData().weaponSource);
 		} else if (a_hitData->weapon) {
 			weapDamageMult = GetWeaponDamageMult(a_hitData->weapon);
 			weapMaterialMult = GetWeaponMaterialMult(a_hitData->weapon);
-		} else {
-			// No weapon = unarmed/creature attack, use creature damage mult
+		}
+		
+		// If weapon type not recognized (0), treat as creature/unarmed attack
+		if (weapDamageMult == 0.f) {
 			weapDamageMult = aggressor ? GetCreatureDamageMult(aggressor) : GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+			weapMaterialMult = 1.0f;
+			isCreatureAttack = true;
 		}
 		
 		float animDamageMult = aggressor ? GetAnimationDamageMult(aggressor) : 0.f;
@@ -47,7 +53,7 @@ namespace MaxsuPoise
 			result *= BlockingMult;
 		}
 
-		// Debug log (only when enabled and target is selected)
+		// Debug logging
 		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
 		auto selectedRef = RE::Console::GetSelectedRef();
 		if (selectedRef && target == selectedRef.get()) {
@@ -67,6 +73,7 @@ namespace MaxsuPoise
 				logs << "  ModIncomingStagger: " << ModIncomingStagger << std::endl;
 				logs << "  BlockingMult: " << BlockingMult << std::endl;
 				logs << "  IsBlocked: " << (a_hitData->flags.any(RE::HitData::Flag::kBlocked) ? "YES" : "NO") << std::endl;
+				logs << "  IsCreatureAttack: " << (isCreatureAttack ? "YES" : "NO") << std::endl;
 				CPrint(logs.str().c_str());
 			}
 		}
