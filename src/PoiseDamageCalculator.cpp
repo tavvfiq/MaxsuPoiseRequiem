@@ -267,7 +267,6 @@ namespace MaxsuPoise
 
 		auto raceName = race->GetFormEditorID();
 		if (!raceName || strlen(raceName) == 0) {
-			float defaultMult = GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
 			if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
 				CPrint("[DEBUG] GetCreatureDamageMult: empty race name, using default: %f", defaultMult);
 			}
@@ -283,7 +282,6 @@ namespace MaxsuPoise
 			}
 		}
 
-		float defaultMult = GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
 		if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
 			CPrint("[DEBUG] GetCreatureDamageMult: no match for race %s, using default: %f", raceName, defaultMult);
 		}
