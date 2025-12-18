@@ -24,15 +24,11 @@ namespace MaxsuPoise
 		} else if (a_hitData->weapon) {
 			weapDamageMult = GetWeaponDamageMult(a_hitData->weapon);
 			weapMaterialMult = GetWeaponMaterialMult(a_hitData->weapon);
-		} else if (aggressor && IsCreature(aggressor)) {
-			weapDamageMult = GetCreatureDamageMult(aggressor);
-			weapMaterialMult = 1.0f;
+		} else {
+			// No weapon = unarmed/creature attack, use creature damage mult
+			weapDamageMult = aggressor ? GetCreatureDamageMult(aggressor) : GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
 		}
 		
-		// Fallback: if no weapon type matched, return 0 damage
-		if (weapDamageMult == 0.f) {
-			return 0.f;
-		}
 		float animDamageMult = aggressor ? GetAnimationDamageMult(aggressor) : 0.f;
 		float attackDataMult = GetAttackDataDamageMult(a_hitData->attackData.get());
 		float criticalMult = GetCriticalHitMult(a_hitData);
