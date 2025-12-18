@@ -73,7 +73,6 @@ namespace MaxsuPoise
 		// Always print debug value for testing
 		auto selectedRef = RE::Console::GetSelectedRef();
 		if (selectedRef && target == selectedRef.get()) {
-			CPrint("[DEBUG] uMaxsuPoise_EnableDebugLog value: %d, enableDebug: %s", debugValue, enableDebug ? "true" : "false");
 			if (enableDebug) {
 				std::ostringstream logs;
 				logs << "-------MaxsuPoise Weapon Stagger Result-------" << std::endl;
