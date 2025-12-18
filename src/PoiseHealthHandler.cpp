@@ -11,6 +11,12 @@ namespace MaxsuPoise
 		float result = 0.f;
 		if (!a_target || !a_target->GetGraphVariableFloat(CURRENT_POISE_HEALTH_GV, result))
 			WARN("Not Graph Variable Float Found: {}", CURRENT_POISE_HEALTH_GV);
+		
+		// Guard against blocking animation glitch: if graph variable returns 0 but actor is valid,
+		// return total poise health instead to prevent phantom bar flashing
+		if (result == 0.f && a_target && a_target->Is3DLoaded()) {
+			return GetTotalPoiseHealth(a_target);
+		}
 
 		return result;
 	}
@@ -27,7 +33,11 @@ namespace MaxsuPoise
 
 		auto actorPoiseHealth = GetBasePoiseHealth() * GetActorMass(a_target) * a_target->GetScale();
 		auto armorPoiseHealth = GetTotalArmorPoiseHealth(a_target);
-		return actorPoiseHealth + armorPoiseHealth;
+		auto armorRatingBonus = GetArmorRatingBonus(a_target);
+		auto staminaPenalty = GetStaminaPenalty(a_target);
+		auto creaturePoiseHealthMult = GetCreaturePoiseHealthMult(a_target);
+		
+		return (actorPoiseHealth + armorPoiseHealth + armorRatingBonus) * staminaPenalty * creaturePoiseHealthMult;
 	}
 
 	float PoiseHealthHandler::GetBasePoiseHealth()
@@ -62,6 +72,38 @@ namespace MaxsuPoise
 		return result;
 	}
 
+	float PoiseHealthHandler::GetArmorRatingBonus(RE::Actor* a_target)
+	{
+		if (!a_target)
+			return 0.f;
+
+		auto armorRating = a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kDamageResist);
+		auto armorScale = GetGameSettingFloat("fMaxsuPoise_ArmorRatingScale", 0.5f);
+		
+		return armorRating * armorScale;
+	}
+
+	float PoiseHealthHandler::GetStaminaPenalty(RE::Actor* a_target)
+	{
+		if (!a_target)
+			return 1.0f;
+
+		auto race = a_target->GetRace();
+		if (race && !race->AllowsPCDialogue())
+			return 1.0f;
+
+		auto currentStamina = a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kStamina);
+		auto maxStamina = a_target->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kStamina);
+		
+		if (maxStamina <= 0.f)
+			return 1.0f;
+
+		auto staminaPercent = currentStamina / maxStamina;
+		auto minPenalty = GetGameSettingFloat("fMaxsuPoise_MinStaminaMult", 0.5f);
+		
+		return std::max(minPenalty, staminaPercent);
+	}
+
 	float PoiseHealthHandler::GetBaseArmorPoiseHealth()
 	{
 		return GetGameSettingFloat("fMaxsuPoise_BaseArmorPoiseHealth", 50.f);
@@ -70,5 +112,33 @@ namespace MaxsuPoise
 	float PoiseHealthHandler::GetHeavyArmorBouns()
 	{
 		return GetGameSettingFloat("fMaxsuPoise_HeavyArmorPoiseBonus", 0.5f);
+	}
+
+	float PoiseHealthHandler::GetCreaturePoiseHealthMult(RE::Actor* a_target)
+	{
+		if (!a_target)
+			return 1.0f;
+
+		auto race = a_target->GetRace();
+		if (!race)
+			return 1.0f;
+
+		// Humanoid races use default 1.0x
+		if (race->AllowsPCDialogue())
+			return 1.0f;
+
+		auto raceName = race->GetFormEditorID();
+		if (!raceName || strlen(raceName) == 0)
+			return 1.0f;
+
+		// Check creature poise multiplier map
+		for (const auto& [raceKeyword, mult] : SettingsHandler::creaturePoiseMultMap) {
+			if (_strnicmp(raceName, raceKeyword.c_str(), raceKeyword.length()) == 0) {
+				return mult;
+			}
+		}
+
+		// No specific multiplier found, use default 1.0
+		return 1.0f;
 	}
 }

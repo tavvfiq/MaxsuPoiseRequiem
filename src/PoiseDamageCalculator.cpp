@@ -15,19 +15,68 @@ namespace MaxsuPoise
 		auto sourceProjectile = a_hitData->sourceRef ? a_hitData->sourceRef.get().get()->AsProjectile() : nullptr;
 
 		float baseWeapDamage = sourceProjectile ? GetBaseRangePoiseDamage() : GetBaseMeleePoiseDamage();
-		float weapDamageMult = sourceProjectile ? GetWeaponDamageMult(sourceProjectile->GetProjectileRuntimeData().weaponSource) : GetWeaponDamageMult(a_hitData->weapon);
+		
+		float weapDamageMult = 0.f;
+		float weapMaterialMult = 1.0f;
+		bool isCreatureAttack = false;
+		
+		// Determine weapon damage multiplier
+		if (sourceProjectile) {
+			weapDamageMult = GetWeaponDamageMult(sourceProjectile->GetProjectileRuntimeData().weaponSource);
+		} else if (a_hitData->weapon) {
+			weapDamageMult = GetWeaponDamageMult(a_hitData->weapon);
+			weapMaterialMult = GetWeaponMaterialMult(a_hitData->weapon);
+		}
+		
+		// If weapon type not recognized (0), treat as creature/unarmed attack
+		if (weapDamageMult == 0.f) {
+			weapDamageMult = aggressor ? GetCreatureDamageMult(aggressor) : GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+			weapMaterialMult = 1.0f;
+			isCreatureAttack = true;
+		}
+		
 		float animDamageMult = aggressor ? GetAnimationDamageMult(aggressor) : 0.f;
 		float attackDataMult = GetAttackDataDamageMult(a_hitData->attackData.get());
+		float criticalMult = GetCriticalHitMult(a_hitData);
+		float velocityMult = aggressor ? GetVelocityMult(aggressor) : 1.0f;
 		float ModTargetStagger = GetPerkModTargetStagger(aggressor, target);
 		float ModIncomingStagger = GetPerkModIncomingStagger(aggressor, target);
 		float StrengthMult = GetStrengthMult(aggressor, target);
 		float BlockingMult = GetBlockingMult(a_hitData);
 
-		result = baseWeapDamage * (weapDamageMult + StrengthMult + attackDataMult) * (1 + animDamageMult) * ModTargetStagger * ModIncomingStagger;
+		// Guard against perk multipliers being 0 (should be 1.0 as neutral)
+		if (ModTargetStagger == 0.f) ModTargetStagger = 1.0f;
+		if (ModIncomingStagger == 0.f) ModIncomingStagger = 1.0f;
+
+		result = baseWeapDamage * weapDamageMult * (1 + attackDataMult) * StrengthMult * weapMaterialMult * (1 + animDamageMult) * velocityMult * criticalMult * ModTargetStagger * ModIncomingStagger;
 		if (a_hitData->flags.any(RE::HitData::Flag::kBlocked)) {
 			result *= BlockingMult;
 		}
 
+		// Debug logging
+		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
+		auto selectedRef = RE::Console::GetSelectedRef();
+		if (selectedRef && target == selectedRef.get()) {
+			if (enableDebug) {
+				std::ostringstream logs;
+				logs << "[DEBUG] Poise Damage Calculation:" << std::endl;
+				logs << "  Result: " << result << std::endl;
+				logs << "  baseWeapDamage: " << baseWeapDamage << std::endl;
+				logs << "  weapDamageMult: " << weapDamageMult << std::endl;
+				logs << "  StrengthMult: " << StrengthMult << std::endl;
+				logs << "  attackDataMult: " << attackDataMult << std::endl;
+				logs << "  weapMaterialMult: " << weapMaterialMult << std::endl;
+				logs << "  animDamageMult: " << animDamageMult << std::endl;
+				logs << "  velocityMult: " << velocityMult << std::endl;
+				logs << "  criticalMult: " << criticalMult << std::endl;
+				logs << "  ModTargetStagger: " << ModTargetStagger << std::endl;
+				logs << "  ModIncomingStagger: " << ModIncomingStagger << std::endl;
+				logs << "  BlockingMult: " << BlockingMult << std::endl;
+				logs << "  IsBlocked: " << (a_hitData->flags.any(RE::HitData::Flag::kBlocked) ? "YES" : "NO") << std::endl;
+				logs << "  IsCreatureAttack: " << (isCreatureAttack ? "YES" : "NO") << std::endl;
+				CPrint(logs.str().c_str());
+			}
+		}
 		return result;
 	}
 
@@ -41,6 +90,7 @@ namespace MaxsuPoise
 		return GetGameSettingFloat("fMaxsuPoise_BaseRangePoiseDamage", 10.5f);
 	}
 
+
 	float PoiseDamageCalculator::GetWeaponDamageMult(RE::TESObjectWEAP* a_weapon)
 	{
 		if (!a_weapon)
@@ -48,6 +98,12 @@ namespace MaxsuPoise
 
 		if (a_weapon->HasKeywordString("MaxsuPoise_UniqueWeapStagger"))
 			return a_weapon->GetStagger();
+
+		for (const auto& [keyword, mult] : SettingsHandler::weapKeywordMultMap) {
+			if (a_weapon->HasKeywordString(keyword)) {
+				return mult;
+			}
+		}
 
 		auto weapType = a_weapon->GetWeaponType();
 		auto item = SettingsHandler::weapTypeMultMap.find(weapType);
@@ -79,10 +135,18 @@ namespace MaxsuPoise
 		};
 
 		auto blockedMode = GetGameSettingUInt("uMaxsuPoise_BlockedMode", 0);
-		if (a_hitData && blockedMode == BlockedModes::kPercentBlocked)
+		
+		if (blockedMode == BlockedModes::kFullyBlocked) {
+			// Fully blocked mode: 0 damage if blocked, 1.0 if not blocked
+			if (a_hitData && a_hitData->percentBlocked > 0.f)
+				return 0.f;
+			return 1.0f;
+		}
+		
+		// Percent blocked mode: scale damage by block percent
+		if (a_hitData)
 			return (1.f - std::clamp(a_hitData->percentBlocked, 0.f, 1.f));
-
-		return 0.f;
+		return 1.0f;
 	}
 
 	float PoiseDamageCalculator::GetStrengthMult(RE::Actor* a_aggressor, RE::Actor* a_target)
@@ -90,6 +154,52 @@ namespace MaxsuPoise
 		float attackerSTRG = GetActorMass(a_aggressor) * a_aggressor->GetScale();
 		float targetSTRG = GetActorMass(a_target) * a_target->GetScale();
 		return attackerSTRG / targetSTRG;
+	}
+
+	float PoiseDamageCalculator::GetWeaponMaterialMult(RE::TESObjectWEAP* a_weapon)
+	{
+		if (!a_weapon)
+			return 1.0f;
+
+		auto weight = a_weapon->GetWeight();
+		auto damage = a_weapon->GetAttackDamage();
+		
+		auto weightScale = GetGameSettingFloat("fMaxsuPoise_WeaponWeightScale", 0.05f);
+		auto damageScale = GetGameSettingFloat("fMaxsuPoise_WeaponDamageScale", 0.015f);
+		
+		return 1.0f + (weight * weightScale) + (damage * damageScale);
+	}
+
+	float PoiseDamageCalculator::GetCriticalHitMult(const RE::HitData* a_hitData)
+	{
+		if (!a_hitData)
+			return 1.0f;
+
+		if (a_hitData->flags.any(RE::HitData::Flag::kCritical)) {
+			return GetGameSettingFloat("fMaxsuPoise_CriticalHitMult", 2.0f);
+		}
+
+		return 1.0f;
+	}
+
+	float PoiseDamageCalculator::GetVelocityMult(RE::Actor* a_aggressor)
+	{
+		if (!a_aggressor)
+			return 1.0f;
+
+		auto actorState = a_aggressor->AsActorState();
+		if (!actorState)
+			return 1.0f;
+		
+		// Check if sprinting or moving forward (charging attack)
+		bool isSprinting = actorState->IsSprinting();
+		bool isMovingForward = actorState->actorState1.movingForward;
+		
+		if (isSprinting || isMovingForward) {
+			return GetGameSettingFloat("fMaxsuPoise_VelocityMult", 1.3f);
+		}
+
+		return 1.0f;
 	}
 
 	float PoiseDamageCalculator::GetMagicPoiseDamage(RE::Actor* a_target, float a_staggerMult, RE::Actor* a_aggressor)
@@ -111,6 +221,9 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetPerkModTargetStagger(RE::Actor* a_aggressor, RE::Actor* a_target)
 	{
+		if (!a_aggressor || !a_target)
+			return 1.0f;
+		
 		using EntryPoint = RE::BGSEntryPointPerkEntry::EntryPoint;
 		float result = 1.0f;
 		ApplyPerkEntryPoint(EntryPoint::kModTargetStagger, a_aggressor, a_target, &result);
@@ -119,9 +232,66 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetPerkModIncomingStagger(RE::Actor* a_aggressor, RE::Actor* a_target)
 	{
+		if (!a_aggressor || !a_target)
+			return 1.0f;
+		
 		using EntryPoint = RE::BGSEntryPointPerkEntry::EntryPoint;
 		float result = 1.0f;
 		ApplyPerkEntryPoint(EntryPoint::kModIncomingStagger, a_target, a_aggressor, &result);
 		return result;
+	}
+
+	bool PoiseDamageCalculator::IsCreature(RE::Actor* a_actor)
+	{
+		if (!a_actor)
+			return false;
+
+		auto race = a_actor->GetRace();
+		if (!race)
+			return false;
+
+		return !race->AllowsPCDialogue();
+	}
+
+	float PoiseDamageCalculator::GetCreatureDamageMult(RE::Actor* a_aggressor)
+	{
+		float defaultMult = GetGameSettingFloat("fMaxsuPoise_DefaultCreatureMult", 1.5f);
+		
+		if (!a_aggressor) {
+			if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+				CPrint("[DEBUG] GetCreatureDamageMult: aggressor is null, using default: %f", defaultMult);
+			}
+			return defaultMult;
+		}
+
+		auto race = a_aggressor->GetRace();
+		if (!race) {
+			if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+				CPrint("[DEBUG] GetCreatureDamageMult: race is null for actor, using default: %f", defaultMult);
+			}
+			return defaultMult;
+		}
+
+		auto raceName = race->GetFormEditorID();
+		if (!raceName || strlen(raceName) == 0) {
+			if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+				CPrint("[DEBUG] GetCreatureDamageMult: empty race name, using default: %f", defaultMult);
+			}
+			return defaultMult;
+		}
+
+		for (const auto& [raceKeyword, mult] : SettingsHandler::creatureRaceMultMap) {
+			if (_strnicmp(raceName, raceKeyword.c_str(), raceKeyword.length()) == 0) {
+				if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+					CPrint("[DEBUG] GetCreatureDamageMult: matched %s with mult %f", raceKeyword.c_str(), mult);
+				}
+				return mult;
+			}
+		}
+
+		if (GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false)) {
+			CPrint("[DEBUG] GetCreatureDamageMult: no match for race %s, using default: %f", raceName, defaultMult);
+		}
+		return defaultMult;
 	}
 }
