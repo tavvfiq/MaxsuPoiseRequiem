@@ -51,7 +51,7 @@ namespace MaxsuPoise
 			result *= BlockingMult;
 		}
 
-		bool enableDebug = GetGameSettingBool("bMaxsuPoise_EnableDebugLog", false);
+		bool enableDebug = GetGameSettingUInt("uMaxsuPoise_EnableDebugLog", 0) != 0;
 		if (enableDebug && target && target == RE::Console::GetSelectedRef().get()) {
 			std::ostringstream logs;
 			logs << "[DEBUG] Zero Damage Breakdown:" << std::endl;
