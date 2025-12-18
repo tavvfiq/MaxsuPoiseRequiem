@@ -25,6 +25,9 @@ namespace MaxsuPoise
 			MaxsuPoise::PoiseRegenHandler::PlayerEx::InstallHook();
 			MaxsuPoise::PerkEntryHook::Install();
 		}
+		else if (msg->type == SKSE::MessagingInterface::kDataLoaded) {
+			MaxsuPoise::TrueHUDHandler::GetSingleton()->Initialize();
+		}
 		else if (msg->type == SKSE::MessagingInterface::kPreLoadGame) {
 			// Release TrueHUD control before loading a new game
 			MaxsuPoise::TrueHUDHandler::GetSingleton()->Shutdown();
