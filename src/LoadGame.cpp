@@ -3,6 +3,7 @@
 #include "Hooks/MagicStaggerHook.h"
 #include "Hooks/PerkEntry_Hooks.h"
 #include "Hooks/PoiseRegenHandler.h"
+#include "Hooks/RagdollReplacerHook.h"
 #include "SettingsHandler.h"
 #include "TrueHUDHandler.h"
 
@@ -24,6 +25,7 @@ namespace MaxsuPoise
 			MaxsuPoise::PoiseRegenHandler::CharacterEx::InstallHook();
 			MaxsuPoise::PoiseRegenHandler::PlayerEx::InstallHook();
 			MaxsuPoise::PerkEntryHook::Install();
+			MaxsuPoise::RagdollReplacerHook::InstallHooks();
 		}
 		else if (msg->type == SKSE::MessagingInterface::kDataLoaded) {
 			MaxsuPoise::TrueHUDHandler::GetSingleton()->Initialize();
