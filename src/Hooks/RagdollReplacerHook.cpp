@@ -38,25 +38,23 @@ namespace MaxsuPoise
 			return func(a_this, a_unk);
 		}
 
-        // Convert ragdoll to largest stagger animation based on direction
+        // Convert ragdoll to custom knockdown animation (for OAR)
         float knockdownDirection = 0.0f;
         a_this->GetGraphVariableFloat("staggerDirection", knockdownDirection);
 
-        // Set direction for MSL (0 = backward, 1 = forward)
-        a_this->SetGraphVariableInt("msl_staggerDirection", 
-            (knockdownDirection > 0.25f && knockdownDirection < 0.75f) ? 1 : 0);
-        
-        // Set largest stagger level for MSL
-        a_this->SetGraphVariableInt("msl_staggerLevel", 4);
-        
+        // Set custom graph variables for OAR conditions
+        a_this->SetGraphVariableInt("MaxsuPoise_Knockdown", 1);  // Flag for OAR
+        a_this->SetGraphVariableInt("MaxsuPoise_KnockdownDirection",
+            (knockdownDirection > 0.25f && knockdownDirection < 0.75f) ? 1 : 0);  // 0=back, 1=forward
+
         // Flash TrueHUD bar with long duration for dramatic effect
         if (TrueHUDHandler::GetSingleton()->IsEnabled()) {
             TrueHUDHandler::GetSingleton()->FlashPoiseBar(a_this, true);
         }
 
-        // Trigger stagger - MSL will route to largest tier based on msl_staggerLevel
-        a_this->NotifyAnimationGraph("StaggerStart");
+        // Trigger custom animation event - OAR can replace this based on MaxsuPoise variables
+        a_this->NotifyAnimationGraph("MaxsuPoise_KnockdownStart");
 
-        return false;  // Prevent ragdoll
+        return false;  // Prevent default ragdoll behavior
     }
 }
